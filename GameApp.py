@@ -53,10 +53,17 @@ class MainMenu(Screen):
     def findThemes(self):
         """
         Finds all theme files in the Themes directory.
-        Returns a list of theme names without the '.txt' extension.
+        Uses the script's location as the base path.
         """
         themes = []
-        themes_directory = os.path.join(os.getcwd(), 'GameApp', 'Themes')
+        # Finds the directory where GameApp.py is actually located
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        themes_directory = os.path.join(base_path, 'Themes')
+        
+        if not os.path.exists(themes_directory):
+            logger.error(f"Themes directory not found at: {themes_directory}")
+            return ["Default"]
+
         for filename in os.listdir(themes_directory):
             if filename.endswith('.txt'):
                 theme_name = filename[:-4]
@@ -83,17 +90,20 @@ class MainMenu(Screen):
         text_input_widget.text = ''\
 
     def ReadWords(self, theme):
-        # To skip blank lines
-        file_location = os.getcwd() + '/GameApp/Themes/' + theme + '.txt'
+        """
+        Reads words from the theme file using a stable relative path.
+        """
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        file_location = os.path.join(base_path, 'Themes', f"{theme}.txt")
+        
         try:
             with open(file_location, 'r', encoding='utf-8') as file:
-                words = [line.strip() for line in file if line.strip()] # Only include if not empty after stripping
+                words = [line.strip() for line in file if line.strip()]
+                logger.info(f"Words loaded from {file_location}")
+                return words
         except FileNotFoundError:
-            logger.info("Error: The file 'words.txt' was not found. Please ensure it exists.")
-        except Exception as e:
-            logger.info("An error occurred: {e}")
-        logger.info("Words loaded from file.")
-        return words
+            logger.error(f"The theme file '{theme}.txt' was not found.")
+            return ["Error_No_Words"]
 
     def AssignWord(self, app):
         # Assign words to players
